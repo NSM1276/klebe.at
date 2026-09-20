@@ -5,10 +5,10 @@ import { motion, useMotionValueEvent, useScroll, useTransform } from "framer-mot
 import { useLanguage } from "@/components/LanguageProvider";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 
-// Scroll progress values where each scene is fully settled (no crossfade in
-// progress). After a swipe/scroll gesture ends, we ease the page to the
-// nearest of these so a fast flick can't leave the user stranded mid-fade
-// or skip straight over a scene.
+// Scroll progress value where each scene sits fully settled (no crossfade in
+// progress). A completed swipe/scroll gesture always eases to one of these,
+// never more than one scene away from where the gesture started — so a fast
+// flick can't skip a scene, and it can't get "stuck" mid-crossfade either.
 const SCENE_REST_POINTS = [0, 0.47, 0.82];
 
 /**
@@ -50,7 +50,7 @@ function MediaLayer({
   label: string;
 }) {
   return (
-    <motion.div style={{ opacity }} className="absolute inset-0">
+    <motion.div style={{ opacity }} className="absolute inset-0 pointer-events-none">
       {!videoSrc && !imgSrc && (
         <div className="absolute inset-0 bg-gradient-to-br from-panel via-ink to-black flex items-center justify-center">
           <span className="text-white/25 text-xs tracking-[0.2em] uppercase text-center px-8">
@@ -108,6 +108,12 @@ export function Scrollytelling() {
   );
   const galleryOpacity = useTransform(scrollYProgress, [SCENE_2_END, SCENE_3_START, 1], [0, 1, 1]);
 
+  // Scenes fully fade out (opacity 0) rather than unmount, so an inactive
+  // scene must stop intercepting clicks meant for the scene visually on top.
+  const heroPointerEvents = useTransform(heroOpacity, (v) => (v > 0.5 ? "auto" : "none"));
+  const processPointerEvents = useTransform(processOpacity, (v) => (v > 0.5 ? "auto" : "none"));
+  const galleryPointerEvents = useTransform(galleryOpacity, (v) => (v > 0.5 ? "auto" : "none"));
+
   const galleryItem1 = useTransform(scrollYProgress, [SCENE_3_START, SCENE_3_START + 0.08], [0, 1]);
   const galleryItem2 = useTransform(scrollYProgress, [SCENE_3_START + 0.03, SCENE_3_START + 0.11], [0, 1]);
   const galleryItem3 = useTransform(scrollYProgress, [SCENE_3_START + 0.06, SCENE_3_START + 0.14], [0, 1]);
@@ -121,30 +127,63 @@ export function Scrollytelling() {
   });
 
   const handleExploreClick = () => {
-    window.scrollBy({ top: window.innerHeight * 1.4, behavior: "smooth" });
+    const container = containerRef.current;
+    if (!container) return;
+    const scrollRange = container.offsetHeight - window.innerHeight;
+    const containerTopAbs = window.scrollY + container.getBoundingClientRect().top;
+    const targetIndex = Math.min(activeScene + 1, SCENE_REST_POINTS.length - 1);
+    window.scrollTo({
+      top: containerTopAbs + SCENE_REST_POINTS[targetIndex] * scrollRange,
+      behavior: "smooth",
+    });
   };
 
-  // After a scroll/swipe gesture settles, ease to the nearest fully-visible
-  // scene instead of leaving the page stuck mid-crossfade or letting a fast
-  // flick skip a whole scene.
+  // After a scroll/swipe gesture settles, ease to the nearest scene *in the
+  // direction the user moved*, capped to at most one scene away from where
+  // the gesture started. This is what makes one swipe == one chapter: a fast
+  // flick can't skip a scene, and a swipe back up can't get pulled back down
+  // to where it started just because that point happens to be numerically
+  // closer.
   useEffect(() => {
     let idleTimer: ReturnType<typeof setTimeout>;
+    let gestureStartIndex = 0;
+
+    const getProgress = () => {
+      const container = containerRef.current;
+      if (!container) return null;
+      const scrollRange = container.offsetHeight - window.innerHeight;
+      if (scrollRange <= 0) return null;
+      return -container.getBoundingClientRect().top / scrollRange;
+    };
+
+    const nearestIndex = (progress: number) =>
+      SCENE_REST_POINTS.reduce(
+        (bestIdx, point, idx) =>
+          Math.abs(point - progress) < Math.abs(SCENE_REST_POINTS[bestIdx] - progress) ? idx : bestIdx,
+        0,
+      );
 
     const settle = () => {
+      const progress = getProgress();
+      if (progress === null || progress < -0.05 || progress > 1.05) return; // outside our zone
+
+      let targetIndex = nearestIndex(progress);
+      // never let one gesture move more than one scene
+      targetIndex = Math.max(gestureStartIndex - 1, Math.min(gestureStartIndex + 1, targetIndex));
+      // a small/accidental movement snaps back to the scene we started from
+      const movedEnough = Math.abs(progress - SCENE_REST_POINTS[gestureStartIndex]) > 0.08;
+      if (!movedEnough) targetIndex = gestureStartIndex;
+
       const container = containerRef.current;
       if (!container) return;
       const scrollRange = container.offsetHeight - window.innerHeight;
-      if (scrollRange <= 0) return;
-      const containerTop = window.scrollY + container.getBoundingClientRect().top;
-      const progress = (window.scrollY - containerTop) / scrollRange;
-      if (progress < -0.05 || progress > 1.05) return; // outside the scrollytelling zone
+      const containerTopAbs = window.scrollY + container.getBoundingClientRect().top;
+      const target = SCENE_REST_POINTS[targetIndex];
 
-      const nearest = SCENE_REST_POINTS.reduce((best, point) =>
-        Math.abs(point - progress) < Math.abs(best - progress) ? point : best,
-      );
-      if (Math.abs(nearest - progress) < 0.02) return; // already settled
+      gestureStartIndex = targetIndex;
+      if (Math.abs(target - progress) < 0.02) return; // already there
 
-      window.scrollTo({ top: containerTop + nearest * scrollRange, behavior: "smooth" });
+      window.scrollTo({ top: containerTopAbs + target * scrollRange, behavior: "smooth" });
     };
 
     const onScroll = () => {
@@ -161,14 +200,6 @@ export function Scrollytelling() {
 
   return (
     <div ref={containerRef} className="relative h-[300vh]">
-      {SCENE_REST_POINTS.map((point) => (
-        <div
-          key={point}
-          aria-hidden
-          className="scene-snap-point absolute w-full h-screen pointer-events-none"
-          style={{ top: `${(point * 200) / 3}%` }}
-        />
-      ))}
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-ink">
         <MediaLayer
           opacity={heroOpacity}
@@ -182,13 +213,13 @@ export function Scrollytelling() {
           poster={PROCESS_POSTER}
           label="Process video · 16:9 1920x1080 (desktop) / 9:16 1080x1920 (mobile)"
         />
-        <motion.div style={{ opacity: galleryOpacity }} className="absolute inset-0 bg-ink" />
+        <motion.div style={{ opacity: galleryOpacity }} className="absolute inset-0 bg-ink pointer-events-none" />
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/40 pointer-events-none" />
 
         {/* Scene 1: Hero text */}
         <motion.div
-          style={{ opacity: heroOpacity }}
+          style={{ opacity: heroOpacity, pointerEvents: heroPointerEvents }}
           className="absolute inset-0 flex flex-col items-center justify-center text-center px-6"
         >
           <Kicker label={t.scrollytelling.chapterLabel} index={1} />
@@ -220,7 +251,7 @@ export function Scrollytelling() {
 
         {/* Scene 2: Process text */}
         <motion.div
-          style={{ opacity: processOpacity }}
+          style={{ opacity: processOpacity, pointerEvents: processPointerEvents }}
           className="absolute inset-0 flex flex-col items-center justify-center px-6"
         >
           <Kicker label={t.scrollytelling.chapterLabel} index={2} />
@@ -245,7 +276,7 @@ export function Scrollytelling() {
 
         {/* Scene 3: Gallery text + photos */}
         <motion.div
-          style={{ opacity: galleryOpacity }}
+          style={{ opacity: galleryOpacity, pointerEvents: galleryPointerEvents }}
           className="absolute inset-0 flex flex-col items-center justify-center px-6"
         >
           <Kicker label={t.scrollytelling.chapterLabel} index={3} />
