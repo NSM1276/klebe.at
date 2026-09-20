@@ -1,9 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useMediaQuery } from "@/lib/useMediaQuery";
+
+// Scroll progress values where each scene is fully settled (no crossfade in
+// progress). After a swipe/scroll gesture ends, we ease the page to the
+// nearest of these so a fast flick can't leave the user stranded mid-fade
+// or skip straight over a scene.
+const SCENE_REST_POINTS = [0, 0.47, 0.82];
 
 /**
  * Media manifest — drop real files at these exact paths under /public/media/
@@ -118,8 +124,51 @@ export function Scrollytelling() {
     window.scrollBy({ top: window.innerHeight * 1.4, behavior: "smooth" });
   };
 
+  // After a scroll/swipe gesture settles, ease to the nearest fully-visible
+  // scene instead of leaving the page stuck mid-crossfade or letting a fast
+  // flick skip a whole scene.
+  useEffect(() => {
+    let idleTimer: ReturnType<typeof setTimeout>;
+
+    const settle = () => {
+      const container = containerRef.current;
+      if (!container) return;
+      const scrollRange = container.offsetHeight - window.innerHeight;
+      if (scrollRange <= 0) return;
+      const containerTop = window.scrollY + container.getBoundingClientRect().top;
+      const progress = (window.scrollY - containerTop) / scrollRange;
+      if (progress < -0.05 || progress > 1.05) return; // outside the scrollytelling zone
+
+      const nearest = SCENE_REST_POINTS.reduce((best, point) =>
+        Math.abs(point - progress) < Math.abs(best - progress) ? point : best,
+      );
+      if (Math.abs(nearest - progress) < 0.02) return; // already settled
+
+      window.scrollTo({ top: containerTop + nearest * scrollRange, behavior: "smooth" });
+    };
+
+    const onScroll = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(settle, 150);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      clearTimeout(idleTimer);
+    };
+  }, []);
+
   return (
     <div ref={containerRef} className="relative h-[300vh]">
+      {SCENE_REST_POINTS.map((point) => (
+        <div
+          key={point}
+          aria-hidden
+          className="scene-snap-point absolute w-full h-screen pointer-events-none"
+          style={{ top: `${(point * 200) / 3}%` }}
+        />
+      ))}
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-ink">
         <MediaLayer
           opacity={heroOpacity}
