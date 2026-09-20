@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 
@@ -89,6 +89,83 @@ function Kicker({ label, index }: { label: string; index: number }) {
   );
 }
 
+function GalleryCarousel({ photos }: { photos: (string | undefined)[] }) {
+  const [index, setIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
+
+  const goTo = (nextIndex: number, dir: 1 | -1) => {
+    setDirection(dir);
+    setIndex((nextIndex + photos.length) % photos.length);
+  };
+  const goNext = () => goTo(index + 1, 1);
+  const goPrev = () => goTo(index - 1, -1);
+
+  return (
+    <div className="relative w-full max-w-xs sm:max-w-sm">
+      <div className="relative aspect-[4/5] rounded-xl overflow-hidden border border-white/10 bg-panel">
+        <AnimatePresence initial={false} custom={direction} mode="wait">
+          <motion.div
+            key={index}
+            custom={direction}
+            className="absolute inset-0"
+            initial={{ opacity: 0, x: direction * 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -direction * 40 }}
+            transition={{ duration: 0.3 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.3}
+            onDragEnd={(_, info) => {
+              if (info.offset.x < -60) goNext();
+              else if (info.offset.x > 60) goPrev();
+            }}
+          >
+            {photos[index] ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img className="w-full h-full object-cover pointer-events-none" src={photos[index]} alt="" />
+            ) : (
+              <span className="w-full h-full flex items-center justify-center text-white/25 text-[10px] tracking-widest uppercase text-center px-2">
+                Photo {index + 1} · 4:5
+              </span>
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        <button
+          type="button"
+          onClick={goPrev}
+          aria-label="Previous"
+          className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-white/30 bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/80 hover:border-accent hover:text-accent transition-colors"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          onClick={goNext}
+          aria-label="Next"
+          className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-white/30 bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/80 hover:border-accent hover:text-accent transition-colors"
+        >
+          ›
+        </button>
+      </div>
+
+      <div className="flex justify-center gap-2 mt-4">
+        {photos.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            aria-label={`Photo ${i + 1}`}
+            onClick={() => goTo(i, i > index ? 1 : -1)}
+            className={`h-1.5 rounded-full transition-all ${
+              i === index ? "w-6 bg-accent" : "w-1.5 bg-white/25"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function Scrollytelling() {
   const { t } = useLanguage();
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -113,12 +190,6 @@ export function Scrollytelling() {
   const heroPointerEvents = useTransform(heroOpacity, (v) => (v > 0.5 ? "auto" : "none"));
   const processPointerEvents = useTransform(processOpacity, (v) => (v > 0.5 ? "auto" : "none"));
   const galleryPointerEvents = useTransform(galleryOpacity, (v) => (v > 0.5 ? "auto" : "none"));
-
-  const galleryItem1 = useTransform(scrollYProgress, [SCENE_3_START, SCENE_3_START + 0.08], [0, 1]);
-  const galleryItem2 = useTransform(scrollYProgress, [SCENE_3_START + 0.03, SCENE_3_START + 0.11], [0, 1]);
-  const galleryItem3 = useTransform(scrollYProgress, [SCENE_3_START + 0.06, SCENE_3_START + 0.14], [0, 1]);
-  const galleryItem4 = useTransform(scrollYProgress, [SCENE_3_START + 0.09, SCENE_3_START + 0.17], [0, 1]);
-  const galleryItems = [galleryItem1, galleryItem2, galleryItem3, galleryItem4];
 
   const [activeScene, setActiveScene] = useState(0);
   useMotionValueEvent(scrollYProgress, "change", (value) => {
@@ -283,24 +354,7 @@ export function Scrollytelling() {
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 tracking-tight">
             {t.gallery.title}
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl w-full">
-            {GALLERY_PHOTOS.map((src, index) => (
-              <motion.div
-                key={index}
-                style={{ opacity: galleryItems[index] }}
-                className="aspect-[4/5] rounded-lg overflow-hidden border border-white/10 bg-panel flex items-center justify-center"
-              >
-                {src ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img className="w-full h-full object-cover" src={src} alt="" />
-                ) : (
-                  <span className="text-white/25 text-[10px] tracking-widest uppercase text-center px-2">
-                    Photo {index + 1} · 4:5
-                  </span>
-                )}
-              </motion.div>
-            ))}
-          </div>
+          <GalleryCarousel photos={GALLERY_PHOTOS} />
         </motion.div>
 
         {/* Persistent scene indicator */}
