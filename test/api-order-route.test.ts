@@ -49,4 +49,17 @@ describe("POST /api/order", () => {
 
     expect(response.status).toBe(502);
   });
+
+  it("returns 400 and does not call Telegram for malformed JSON", async () => {
+    const request = new Request("http://localhost/api/order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "not valid json{",
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(400);
+    expect(sendTelegramOrderNotification).not.toHaveBeenCalled();
+  });
 });

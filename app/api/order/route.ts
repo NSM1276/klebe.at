@@ -4,7 +4,16 @@ import { formatOrderMessage } from "@/lib/formatOrderMessage";
 import { sendTelegramOrderNotification } from "@/lib/telegram";
 
 export async function POST(request: Request) {
-  const json = await request.json();
+  let json: unknown;
+  try {
+    json = await request.json();
+  } catch (error) {
+    return NextResponse.json(
+      { ok: false, error: "invalid_json" },
+      { status: 400 },
+    );
+  }
+
   const parsed = orderPayloadSchema.safeParse(json);
 
   if (!parsed.success) {
@@ -19,6 +28,7 @@ export async function POST(request: Request) {
   try {
     await sendTelegramOrderNotification(message);
   } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { ok: false, error: "notification_failed" },
       { status: 502 },
