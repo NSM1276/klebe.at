@@ -57,4 +57,31 @@ describe("formatOrderMessage", () => {
       ].join("\n"),
     );
   });
+
+  it("omits the Zusatztext line for a full order without extraText", () => {
+    const payload: OrderPayload = {
+      path: "full",
+      name: "Frau Huber",
+      phone: "+436601234567",
+      quality: "standard",
+      color: "black",
+      size: "30x30",
+      schedule: {
+        sameEveryDay: true,
+        everyDay: { open: true, from: "08:00", to: "18:00" },
+        perDay: {
+          mon: { open: true, from: "08:00", to: "18:00" },
+          tue: { open: true, from: "08:00", to: "18:00" },
+          wed: { open: true, from: "08:00", to: "18:00" },
+          thu: { open: true, from: "08:00", to: "18:00" },
+          fri: { open: true, from: "08:00", to: "18:00" },
+          sat: { open: true, from: "08:00", to: "18:00" },
+          sun: { open: true, from: "08:00", to: "18:00" },
+        },
+      },
+    };
+
+    const message = formatOrderMessage(payload);
+    expect(message).not.toContain("Zusatztext:");
+  });
 });

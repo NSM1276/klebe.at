@@ -1,7 +1,10 @@
 import { formatSchedule } from "@/lib/schedule";
 import type { OrderPayload } from "@/lib/orderSchema";
 
-const QUALITY_LABEL: Record<string, string> = {
+const QUALITY_LABEL: Record<
+  Extract<OrderPayload, { path: "full" }>["quality"],
+  string
+> = {
   basic: "basic (3 Jahre)",
   standard: "standard (5 Jahre)",
   premium: "premium (8-10 Jahre)",
