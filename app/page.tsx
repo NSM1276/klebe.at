@@ -1,4 +1,5 @@
 import { LanguageProvider } from "@/components/LanguageProvider";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { Hero } from "@/components/Hero";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Gallery } from "@/components/Gallery";
@@ -10,6 +11,7 @@ import { OrderForm } from "@/components/order-form/OrderForm";
 export default function Home() {
   return (
     <LanguageProvider>
+      <LanguageToggle />
       <main>
         <Hero />
         <HowItWorks />
