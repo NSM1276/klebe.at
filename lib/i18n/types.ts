@@ -8,6 +8,11 @@ export type Dictionary = {
     steps: { title: string; text: string }[];
   };
   gallery: { title: string };
+  scrollytelling: {
+    chapterLabel: string;
+    scenes: [string, string, string];
+    secondaryCta: string;
+  };
   pricing: {
     title: string;
     qualityLabel: string;

@@ -18,6 +18,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
       ],
     },
     gallery: { title: "Beispiele" },
+    scrollytelling: {
+      chapterLabel: "Kapitel",
+      scenes: ["Präzision", "Ablauf", "Beispiele"],
+      secondaryCta: "Weiter entdecken",
+    },
     pricing: {
       title: "Preise",
       qualityLabel: "Qualität",
@@ -70,6 +75,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
       ],
     },
     gallery: { title: "Examples" },
+    scrollytelling: {
+      chapterLabel: "Chapter",
+      scenes: ["Precision", "Process", "Examples"],
+      secondaryCta: "Keep exploring",
+    },
     pricing: {
       title: "Pricing",
       qualityLabel: "Quality",

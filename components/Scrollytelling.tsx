@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef, useState } from "react";
+import { motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 
@@ -72,6 +72,17 @@ function MediaLayer({
   );
 }
 
+function Kicker({ label, index }: { label: string; index: number }) {
+  return (
+    <div className="flex items-center justify-center gap-3 mb-4">
+      <span className="h-px w-8 bg-accent" />
+      <span className="text-accent text-xs font-semibold tracking-[0.25em] uppercase">
+        {label} {String(index).padStart(2, "0")}
+      </span>
+    </div>
+  );
+}
+
 export function Scrollytelling() {
   const { t } = useLanguage();
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -97,6 +108,16 @@ export function Scrollytelling() {
   const galleryItem4 = useTransform(scrollYProgress, [SCENE_3_START + 0.09, SCENE_3_START + 0.17], [0, 1]);
   const galleryItems = [galleryItem1, galleryItem2, galleryItem3, galleryItem4];
 
+  const [activeScene, setActiveScene] = useState(0);
+  useMotionValueEvent(scrollYProgress, "change", (value) => {
+    const index = value < SCENE_2_START ? 0 : value < SCENE_3_START ? 1 : 2;
+    setActiveScene((prev) => (prev === index ? prev : index));
+  });
+
+  const handleExploreClick = () => {
+    window.scrollBy({ top: window.innerHeight * 1.4, behavior: "smooth" });
+  };
+
   return (
     <div ref={containerRef} className="relative h-[300vh]">
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-ink">
@@ -121,14 +142,31 @@ export function Scrollytelling() {
           style={{ opacity: heroOpacity }}
           className="absolute inset-0 flex flex-col items-center justify-center text-center px-6"
         >
-          <h1 className="text-4xl md:text-6xl font-bold text-white max-w-3xl">{t.hero.title}</h1>
-          <p className="mt-6 text-lg text-white/70 max-w-xl">{t.hero.subtitle}</p>
-          <a
-            href="#order"
-            className="mt-8 inline-block bg-accent text-black font-semibold px-6 py-3 rounded-md"
-          >
-            {t.hero.cta}
-          </a>
+          <Kicker label={t.scrollytelling.chapterLabel} index={1} />
+          <h1 className="text-4xl md:text-6xl font-bold text-white max-w-3xl tracking-tight">
+            {t.hero.title}
+          </h1>
+          <div className="mt-6 max-w-xl rounded-xl border border-white/10 bg-black/40 backdrop-blur-md px-6 py-4">
+            <p className="text-lg text-white/80">{t.hero.subtitle}</p>
+          </div>
+          <div className="mt-8 flex flex-col sm:flex-row items-center gap-6">
+            <a
+              href="#order"
+              className="inline-block bg-accent text-black font-semibold px-6 py-3 rounded-md"
+            >
+              {t.hero.cta}
+            </a>
+            <button
+              type="button"
+              onClick={handleExploreClick}
+              className="group flex items-center gap-3 text-white/80 text-sm font-semibold tracking-wide uppercase"
+            >
+              <span className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center transition-colors group-hover:border-accent group-hover:text-accent">
+                ↓
+              </span>
+              {t.scrollytelling.secondaryCta}
+            </button>
+          </div>
         </motion.div>
 
         {/* Scene 2: Process text */}
@@ -136,10 +174,16 @@ export function Scrollytelling() {
           style={{ opacity: processOpacity }}
           className="absolute inset-0 flex flex-col items-center justify-center px-6"
         >
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-8">{t.howItWorks.title}</h2>
+          <Kicker label={t.scrollytelling.chapterLabel} index={2} />
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 tracking-tight">
+            {t.howItWorks.title}
+          </h2>
           <div className="grid gap-6 md:grid-cols-3 max-w-4xl">
             {t.howItWorks.steps.map((step, index) => (
-              <div key={step.title} className="bg-black/40 backdrop-blur-sm rounded-lg p-6">
+              <div
+                key={step.title}
+                className="bg-black/40 backdrop-blur-md rounded-xl border border-white/10 p-6"
+              >
                 <span className="text-accent text-sm font-semibold">
                   {String(index + 1).padStart(2, "0")}
                 </span>
@@ -155,13 +199,16 @@ export function Scrollytelling() {
           style={{ opacity: galleryOpacity }}
           className="absolute inset-0 flex flex-col items-center justify-center px-6"
         >
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-8">{t.gallery.title}</h2>
+          <Kicker label={t.scrollytelling.chapterLabel} index={3} />
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 tracking-tight">
+            {t.gallery.title}
+          </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl w-full">
             {GALLERY_PHOTOS.map((src, index) => (
               <motion.div
                 key={index}
                 style={{ opacity: galleryItems[index] }}
-                className="aspect-[4/5] rounded-lg overflow-hidden bg-panel flex items-center justify-center"
+                className="aspect-[4/5] rounded-lg overflow-hidden border border-white/10 bg-panel flex items-center justify-center"
               >
                 {src ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -175,6 +222,28 @@ export function Scrollytelling() {
             ))}
           </div>
         </motion.div>
+
+        {/* Persistent scene indicator */}
+        <div className="absolute bottom-6 right-4 md:bottom-8 md:right-8 z-10 flex items-center gap-3 rounded-xl border border-white/10 bg-black/50 backdrop-blur-md px-4 py-3">
+          <div className="flex gap-1.5">
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                  i === activeScene ? "bg-accent" : "bg-white/25"
+                }`}
+              />
+            ))}
+          </div>
+          <div className="leading-tight">
+            <div className="text-white/50 text-[10px] tracking-[0.2em] uppercase">
+              {t.scrollytelling.chapterLabel} {String(activeScene + 1).padStart(2, "0")} / 03
+            </div>
+            <div className="text-white text-xs font-semibold">
+              {t.scrollytelling.scenes[activeScene]}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
