@@ -87,9 +87,9 @@
 
 ## Деплой (Vercel)
 
-1. Запушить репозиторий на GitHub.
+1. Запушить репозиторий на GitHub (это делает разработчик — тебе не нужно самому разбираться с git/GitHub).
 2. Импортировать проект в Vercel (vercel.com → New Project → выбрать репозиторий).
-3. В настройках проекта Vercel → Environment Variables добавить `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID` (те же значения, что в `.env.local`).
+3. В настройках проекта Vercel → Environment Variables добавить `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID` (те же значения, что в `.env.local`). Что это за значения и как их получить — см. `.env.local.example` в корне репозитория.
 4. Deploy. Позже подключить домен klebe.at в Vercel → Settings → Domains.
 
 ## Открытые вопросы / TODO
