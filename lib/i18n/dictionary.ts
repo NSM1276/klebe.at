@@ -49,6 +49,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
       submit: "Absenden",
       successMessage: "Danke! Wir melden uns telefonisch bei Ihnen.",
       errorMessage: "Etwas ist schiefgelaufen. Bitte rufen Sie uns direkt an.",
+      colorNames: { white: "Weiß", black: "Schwarz", gold: "Gold", silver: "Silber" },
+      dayLabels: { mon: "Mo", tue: "Di", wed: "Mi", thu: "Do", fri: "Fr", sat: "Sa", sun: "So" },
     },
   },
   en: {
@@ -99,6 +101,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
       submit: "Submit",
       successMessage: "Thanks! We'll call you back.",
       errorMessage: "Something went wrong. Please call us directly.",
+      colorNames: { white: "White", black: "Black", gold: "Gold", silver: "Silver" },
+      dayLabels: { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" },
     },
   },
 };

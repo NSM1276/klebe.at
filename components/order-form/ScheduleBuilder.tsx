@@ -3,15 +3,6 @@
 import type { DayHours, DayKey, WeekSchedule } from "@/lib/schedule";
 
 const DAY_ORDER: DayKey[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
-const DAY_LABEL: Record<DayKey, string> = {
-  mon: "Mo",
-  tue: "Di",
-  wed: "Mi",
-  thu: "Do",
-  fri: "Fr",
-  sat: "Sa",
-  sun: "So",
-};
 
 function TimeRow({
   hours,
@@ -50,10 +41,12 @@ export function ScheduleBuilder({
   value,
   onChange,
   sameEveryDayLabel,
+  dayLabels,
 }: {
   value: WeekSchedule;
   onChange: (value: WeekSchedule) => void;
   sameEveryDayLabel: string;
+  dayLabels: Record<DayKey, string>;
 }) {
   return (
     <div className="space-y-3">
@@ -77,7 +70,7 @@ export function ScheduleBuilder({
         <div className="space-y-2">
           {DAY_ORDER.map((day) => (
             <div key={day} className="flex items-center gap-3">
-              <span className="w-6 text-sm text-white/70">{DAY_LABEL[day]}</span>
+              <span className="w-6 text-sm text-white/70">{dayLabels[day]}</span>
               <TimeRow
                 hours={value.perDay[day]}
                 onChange={(hours) =>

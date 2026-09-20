@@ -7,6 +7,7 @@ import { ColorSelect, type Color } from "@/components/order-form/ColorSelect";
 import { SizeSelect, type Size } from "@/components/order-form/SizeSelect";
 import { ScheduleBuilder } from "@/components/order-form/ScheduleBuilder";
 import type { WeekSchedule } from "@/lib/schedule";
+import type { OrderPayload } from "@/lib/orderSchema";
 
 const DEFAULT_SCHEDULE: WeekSchedule = {
   sameEveryDay: true,
@@ -40,11 +41,11 @@ export function OrderForm() {
     event.preventDefault();
     setState("sending");
 
-    const payload =
+    const payload: OrderPayload =
       path === "quick"
-        ? { path: "quick" as const, name, phone }
+        ? { path: "quick", name, phone }
         : {
-            path: "full" as const,
+            path: "full",
             name,
             phone,
             quality,
@@ -76,6 +77,7 @@ export function OrderForm() {
       <div className="flex gap-2">
         <button
           type="button"
+          aria-pressed={path === "full"}
           onClick={() => setPath("full")}
           className={`px-4 py-2 rounded-md text-sm ${
             path === "full" ? "bg-accent text-black" : "border border-white/20 text-white"
@@ -85,6 +87,7 @@ export function OrderForm() {
         </button>
         <button
           type="button"
+          aria-pressed={path === "quick"}
           onClick={() => setPath("quick")}
           className={`px-4 py-2 rounded-md text-sm ${
             path === "quick" ? "bg-accent text-black" : "border border-white/20 text-white"
@@ -97,7 +100,12 @@ export function OrderForm() {
       {path === "full" && (
         <>
           <QualitySelect value={quality} onChange={setQuality} label={t.orderForm.qualityLabel} />
-          <ColorSelect value={color} onChange={setColor} label={t.orderForm.colorLabel} />
+          <ColorSelect
+            value={color}
+            onChange={setColor}
+            label={t.orderForm.colorLabel}
+            names={t.orderForm.colorNames}
+          />
           <SizeSelect value={size} onChange={setSize} label={t.orderForm.sizeLabel} />
           <div>
             <p className="text-sm text-white/70 mb-2">{t.orderForm.scheduleTitle}</p>
@@ -105,6 +113,7 @@ export function OrderForm() {
               value={schedule}
               onChange={setSchedule}
               sameEveryDayLabel={t.orderForm.sameEveryDayLabel}
+              dayLabels={t.orderForm.dayLabels}
             />
           </div>
           <label className="block">

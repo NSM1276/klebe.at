@@ -13,10 +13,12 @@ export function ColorSelect({
   value,
   onChange,
   label,
+  names,
 }: {
   value: Color;
   onChange: (value: Color) => void;
   label: string;
+  names: Record<Color, string>;
 }) {
   return (
     <fieldset>
@@ -26,7 +28,8 @@ export function ColorSelect({
           <button
             key={option.value}
             type="button"
-            aria-label={option.value}
+            aria-label={names[option.value]}
+            aria-pressed={value === option.value}
             onClick={() => onChange(option.value)}
             className={`w-9 h-9 rounded-full border-2 ${
               value === option.value ? "border-accent" : "border-white/20"

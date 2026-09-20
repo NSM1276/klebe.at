@@ -25,6 +25,7 @@ export function QualitySelect({
           <button
             key={option.value}
             type="button"
+            aria-pressed={value === option.value}
             onClick={() => onChange(option.value)}
             className={`px-4 py-2 rounded-md border text-sm ${
               value === option.value

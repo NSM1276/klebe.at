@@ -35,5 +35,7 @@ export type Dictionary = {
     submit: string;
     successMessage: string;
     errorMessage: string;
+    colorNames: { white: string; black: string; gold: string; silver: string };
+    dayLabels: { mon: string; tue: string; wed: string; thu: string; fri: string; sat: string; sun: string };
   };
 };

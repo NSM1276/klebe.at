@@ -21,6 +21,7 @@ export function SizeSelect({
           <button
             key={option}
             type="button"
+            aria-pressed={value === option}
             onClick={() => onChange(option)}
             className={`px-4 py-2 rounded-md border text-sm ${
               value === option
