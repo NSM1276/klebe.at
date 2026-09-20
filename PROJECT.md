@@ -85,6 +85,13 @@
 - Категория бизнеса — подобрать точный немецкий термин (Schilderhersteller/Beschriftungen или близкое)
 - **TODO:** помочь владельцу открыть и настроить этот профиль (отдельная задача, не входит в код сайта)
 
+## Деплой (Vercel)
+
+1. Запушить репозиторий на GitHub.
+2. Импортировать проект в Vercel (vercel.com → New Project → выбрать репозиторий).
+3. В настройках проекта Vercel → Environment Variables добавить `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID` (те же значения, что в `.env.local`).
+4. Deploy. Позже подключить домен klebe.at в Vercel → Settings → Domains.
+
 ## Открытые вопросы / TODO
 
 - [ ] Купить домен klebe.at
